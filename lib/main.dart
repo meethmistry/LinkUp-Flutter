@@ -1,11 +1,20 @@
 // ignore_for_file: unused_import
 import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:linkup/Providers/font.provider.dart';
+import 'package:linkup/Providers/theme.provider.dart';
 import 'package:linkup/splash.screen.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(
-    const MyApp(),
+     MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FontSizeProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: MyApp(),
+    ),
   );
 }
 

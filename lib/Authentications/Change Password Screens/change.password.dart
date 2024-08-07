@@ -1,7 +1,9 @@
 // ignore_for_file: unused_local_variable
 
 import 'package:flutter/material.dart';
+import 'package:linkup/Settings/Sub_Setting_Screens/account.setting.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Utilities/Dialog_Box/custom.dialogbox.dart';
 import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
 import 'package:linkup/Widgets/Form_Controllers/textfiled.dart';
@@ -16,7 +18,6 @@ class ChangePassword extends StatefulWidget {
 class _SignUpScreenState extends State<ChangePassword> {
   final _formKey = GlobalKey<FormState>();
   final ThemeColors _themeColors = ThemeColors();
-
 
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -35,7 +36,16 @@ class _SignUpScreenState extends State<ChangePassword> {
         final old = _oldPasswordController.text;
         final password = _passwordController.text;
         final conformPassword = _conformPasswordController.text;
-       
+        SuccessDialogBox(
+            message: "Your Password Is Changed Successfully.",
+            buttonAction: () {
+              Navigator.of(context).pop();
+              Navigator.push(context, MaterialPageRoute(
+                builder: (context) {
+                  return const AccountSettings();
+                },
+              ));
+            }).show(context);
       }
     }
   }
@@ -59,7 +69,7 @@ class _SignUpScreenState extends State<ChangePassword> {
                 child: Column(
                   children: [
                     const HeaderText(text: "Change Password"),
-                     CustomTextFormField(
+                    CustomTextFormField(
                       controller: _oldPasswordController,
                       labelText: "Old Password",
                       prefixIcon: Icons.lock,
@@ -108,7 +118,7 @@ class _SignUpScreenState extends State<ChangePassword> {
                       buttonText: "Change Password",
                       onClick: _changePassword,
                     ),
-                     const SizedBox(
+                    const SizedBox(
                       height: 10,
                     ),
                   ],

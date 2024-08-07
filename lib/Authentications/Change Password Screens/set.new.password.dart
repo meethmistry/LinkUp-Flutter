@@ -1,6 +1,7 @@
 // ignore_for_file: unused_local_variable
 
 import 'package:flutter/material.dart';
+import 'package:linkup/Main_Screens/chatlist.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
@@ -30,6 +31,11 @@ class _GetUserEmailState extends State<SetNewPassword> {
       } else {
         final password = _passwordController.text;
         final conformPassword = _conformPasswordController.text;
+         Navigator.push(context, MaterialPageRoute(
+        builder: (context) {
+          return ChatListScreen();
+        },
+      ));
       }
     }
   }

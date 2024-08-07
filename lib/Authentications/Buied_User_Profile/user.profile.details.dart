@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/Authentications/Buied_User_Profile/profile.image.widget.dart';
+import 'package:linkup/Main_Screens/chatlist.screen.dart';
 import 'package:linkup/Utilities/Dialog_Box/custom.dialogbox.dart';
 import 'package:linkup/Utilities/Snack_Bar/gallery.or.camera.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
@@ -30,6 +31,11 @@ class _SignUpScreenState extends State<BuiledUserProfile> {
       final name = _userNameController.text;
       final about = _abouteController.text;
       final number = _numberController.text;
+       Navigator.push(context, MaterialPageRoute(
+        builder: (context) {
+          return ChatListScreen();
+        },
+      ));
     }
   }
 
@@ -127,6 +133,7 @@ class _SignUpScreenState extends State<BuiledUserProfile> {
                     ),
                     CustomTextFormField(
                       controller: _abouteController,
+                      maxLines: 3,
                       labelText: "About",
                       prefixIcon: Icons.info,
                       keyboardType: TextInputType.text,

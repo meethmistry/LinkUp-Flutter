@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:linkup/Authentications/Change%20Password%20Screens/get.user.email.dart';
 import 'package:linkup/Authentications/signup.screen.dart';
+import 'package:linkup/Main_Screens/chatlist.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
 import 'package:linkup/Widgets/Form_Controllers/textfiled.dart';
@@ -24,6 +25,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
+      Navigator.push(context, MaterialPageRoute(
+        builder: (context) {
+          return ChatListScreen();
+        },
+      ));
     }
   }
 
@@ -163,8 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Expanded(
                             child: Divider(
-                                color:
-                                    _themeColors.iconColor(context),
+                                color: _themeColors.iconColor(context),
                                 height: 1.5),
                           ),
                           Padding(
@@ -174,15 +179,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color:
-                                    _themeColors.iconColor(context),
+                                color: _themeColors.iconColor(context),
                               ),
                             ),
                           ),
                           Expanded(
                             child: Divider(
-                                color:
-                                    _themeColors.iconColor(context),
+                                color: _themeColors.iconColor(context),
                                 height: 1.5),
                           ),
                         ],
