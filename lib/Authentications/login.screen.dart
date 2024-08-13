@@ -3,8 +3,11 @@
 import 'package:flutter/material.dart';
 import 'package:linkup/Authentications/Change%20Password%20Screens/get.user.email.dart';
 import 'package:linkup/Authentications/signup.screen.dart';
+import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Main_Screens/chatlist.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Theme/loading.indicator.dart';
+import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
 import 'package:linkup/Widgets/Form_Controllers/textfiled.dart';
 
@@ -20,16 +23,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _themeColors = ThemeColors();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final UserFirebaseController _firebaseController = UserFirebaseController();
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text;
       final password = _passwordController.text;
-      Navigator.push(context, MaterialPageRoute(
-        builder: (context) {
-          return ChatListScreen();
-        },
-      ));
+
+      LoadingIndicator.show();
+
+      try {
+        String res = await _firebaseController.loginUsers(email, password);
+        if (res == "Success") {
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return ChatListScreen();
+            },
+          ));
+        } else {
+          CustomSnackbar(
+            text: 'Inccorect email or password.',
+            color: _themeColors.snackBarRed(context),
+          ).show(context);
+        }
+        LoadingIndicator.dismiss();
+      } catch (e) {
+        CustomSnackbar(
+          text: 'Something want wrong',
+          color: _themeColors.snackBarRed(context),
+        ).show(context);
+      }
     }
   }
 

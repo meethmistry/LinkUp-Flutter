@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:adaptive_theme/adaptive_theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:linkup/Authentications/login.screen.dart';
 import 'package:linkup/Main_Screens/chatlist.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 
@@ -18,12 +20,25 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 4), () {
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    await Future.delayed(
+        const Duration(seconds: 4)); // Show splash screen for 4 seconds
+
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const ChatListScreen()),
       );
-    });
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override

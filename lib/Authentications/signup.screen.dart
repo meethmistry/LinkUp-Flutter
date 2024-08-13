@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:linkup/Authentications/Buied_User_Profile/user.profile.details.dart';
 import 'package:linkup/Authentications/login.screen.dart';
+import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Theme/loading.indicator.dart';
 import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
 import 'package:linkup/Widgets/Form_Controllers/textfiled.dart';
@@ -18,7 +20,8 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final ThemeColors _themeColors = ThemeColors();
-
+  final UserFirebaseController _userFirebaseController =
+      UserFirebaseController();
   _login() {
     ScaffoldMessenger.of(context).clearSnackBars();
     Navigator.push(context, MaterialPageRoute(
@@ -33,7 +36,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _conformPasswordController =
       TextEditingController();
 
-  _signUp() {
+  _signUp() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (_formKey.currentState!.validate()) {
       if (_conformPasswordController.text != _passwordController.text) {
@@ -41,15 +44,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
           text: 'Password and Confirm Password must be same',
           color: _themeColors.snackBarRed(context),
         ).show(context);
+      } else if (_passwordController.text.length < 6) {
+        CustomSnackbar(
+          text: 'Password length should be greter then 5.',
+          color: _themeColors.snackBarRed(context),
+        ).show(context);
       } else {
         final email = _emailController.text;
         final password = _passwordController.text;
         final conformPassword = _conformPasswordController.text;
-        Navigator.push(context, MaterialPageRoute(
-          builder: (context) {
-            return const BuiledUserProfile();
-          },
-        ));
+        LoadingIndicator.show();
+
+        try {
+          String? firebaseUid =
+              await _userFirebaseController.signUpUsers(email, password);
+
+          setState(() {
+            _formKey.currentState!.reset();
+            LoadingIndicator.dismiss();
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return BuiledUserProfile(
+                  userId: firebaseUid,
+                );
+              },
+            ));
+          });
+        } catch (e) {
+                      LoadingIndicator.dismiss();
+
+          CustomSnackbar(
+            text: 'Something want wrong. Please! try again.',
+            color: _themeColors.snackBarRed(context),
+          ).show(context);
+        }
       }
     }
   }

@@ -1,45 +1,81 @@
 // ignore_for_file: unused_local_variable
 
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/Authentications/Buied_User_Profile/profile.image.widget.dart';
+import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Main_Screens/chatlist.screen.dart';
+import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Theme/loading.indicator.dart';
 import 'package:linkup/Utilities/Dialog_Box/custom.dialogbox.dart';
+import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:linkup/Utilities/Snack_Bar/gallery.or.camera.snackbar.dart';
 import 'package:linkup/Widgets/Backgrounds/design.widgets.dart';
 import 'package:linkup/Widgets/Form_Controllers/textfiled.dart';
 
 class BuiledUserProfile extends StatefulWidget {
-  const BuiledUserProfile({super.key});
+  final String? userId;
+  const BuiledUserProfile({super.key, required this.userId});
 
   @override
   State<BuiledUserProfile> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<BuiledUserProfile> {
-  final _formKey = GlobalKey<FormState>();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userId == null || widget.userId!.isEmpty) {
+      Navigator.pop(context);
+    }
+  }
 
+  final ThemeColors _themeColors = ThemeColors();
+  final _formKey = GlobalKey<FormState>();
+  final UserFirebaseController _userFirebaseController =
+      UserFirebaseController();
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _abouteController = TextEditingController();
   final TextEditingController _numberController = TextEditingController();
+  Uint8List? _image;
 
-  _saveDetails() {
+  _saveDetails() async {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     if (_formKey.currentState!.validate()) {
       final name = _userNameController.text;
       final about = _abouteController.text;
       final number = _numberController.text;
-       Navigator.push(context, MaterialPageRoute(
-        builder: (context) {
-          return ChatListScreen();
-        },
-      ));
+      LoadingIndicator.show();
+
+      final isTaken = await _userFirebaseController.isUserNameTaken(name);
+      if (isTaken) {
+        CustomSnackbar(
+          text: 'Username already taken. Please choose another.',
+          color: _themeColors.snackBarRed(context),
+        ).show(context);
+      } else {
+        try {
+          await _userFirebaseController.makeProfile(
+              name, about, number, _image, widget.userId!);
+
+          Navigator.push(context, MaterialPageRoute(
+            builder: (context) {
+              return ChatListScreen();
+            },
+          ));
+        } catch (e) {
+          CustomSnackbar(
+            text: 'Something want wrong. Please! try again.',
+            color: _themeColors.snackBarRed(context),
+          ).show(context);
+        } finally {
+          LoadingIndicator.dismiss();
+        }
+      }
     }
   }
 
-  Uint8List? _image;
   final ProfileImageWithButton _profileImageWithButton = ProfileImageWithButton(
     onButtonPressed: () {},
   );
