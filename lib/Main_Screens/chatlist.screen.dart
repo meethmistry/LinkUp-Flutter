@@ -1,10 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:linkup/Controllers/message.controller.dart';
+import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Main_Screens/chat.screen.dart';
 import 'package:linkup/Main_Screens/search.screen.dart';
 import 'package:linkup/Main_Screens/user.profile.screen.dart';
+import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Settings/main.setting.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
+// import 'package:linkup/Utilities/Dialog_Box/selecte.multiple.user.to.shere.msg.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -15,46 +20,58 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   final ThemeColors _themeColors = ThemeColors();
+  final UserFirebaseController _userFirebaseController =
+      UserFirebaseController();
 
-  final List<Map<String, String>> users = [
-    {
-      "name": "User One",
-      "lastMessage": "This is Last Message",
-      "email": "userone12@gmail.com",
-      "isStatus": "true",
-      "imageUrl":
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFdoXe8AoCq0BUuu6LhgSGqwUdMUwdLdyPnQ&s"
-    },
-    {
-      "name": "User Two",
-      "lastMessage": "This is Last Message",
-      "email": "usertwo12@gmail.com",
-      "isStatus": "false",
-      "imageUrl":
-          "https://www.shutterstock.com/image-vector/default-user-profile-icon-vector-260nw-2422228925.jpg"
-    },
-    {
-      "name": "User Three",
-      "lastMessage": "This is Last Message",
-      "email": "userthree12@gmail.com",
-      "isStatus": "true",
-      "imageUrl":
-          "https://w7.pngwing.com/pngs/867/694/png-transparent-user-profile-default-computer-icons-network-video-recorder-avatar-cartoon-maker-blue-text-logo.png"
-    },
-  ];
+  final MessageFirebaseController _messageFirebaseController =
+      MessageFirebaseController();
 
   _navigation(Widget _page) {
     Navigator.push(context, MaterialPageRoute(
       builder: (context) {
         return _page;
       },
-    ));
+    )).whenComplete(() {
+      setState(() {
+        if (_page == SearchScreen()) {
+          getUsers();
+        }
+      });
+    });
+  }
+
+  List<UserWithMessage> usersWithMessages = [];
+  @override
+  void initState() {
+    super.initState();
+    getUsers();
+  }
+
+  void getUsers() async {
+    try {
+      List<UserWithMessage> fetchedUsers =
+          await _userFirebaseController.getChatUsers();
+      setState(() {
+        usersWithMessages = fetchedUsers;
+      });
+    } catch (e) {
+      print('Error fetching users: $e');
+    }
+  }
+
+  void _pickImage(ImageSource source) async {
+    final imageBytes =
+        await _messageFirebaseController.pickImageToShere(source);
+    if (imageBytes != null) {
+      // SendMessageToMultipleUser(
+      //   users: users,
+      //   imageBytes: imageBytes,
+      // ).show(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final statusUsers =
-        users.where((user) => user["isStatus"] == "true").toList();
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -83,10 +100,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     _navigation(const SearchScreen());
                     break;
                   case 'camera':
-                    // Handle Camera action
+                    _pickImage(ImageSource.camera);
                     break;
                   case 'settings':
-                    _navigation(MainSettingScreen());
+                    _navigation(const MainSettingScreen());
                     break;
                   case 'createGroup':
                     // Handle New Group
@@ -163,120 +180,46 @@ class _ChatListScreenState extends State<ChatListScreen> {
           const SizedBox(
             height: 5,
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 15, right: 7),
-                          child: CircleAvatar(
-                            radius: 35,
-                            backgroundColor: Colors.grey,
-                            foregroundColor: _themeColors.iconColor(context),
-                          ),
-                        ),
-                        Positioned(
-                          top: 45,
-                          left: 63,
-                          child: InkWell(
-                            onTap: () {},
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _themeColors.blueColor),
-                              child: Icon(
-                                Icons.add,
-                                size: 15,
-                                color:
-                                    _themeColors.themeBasedIconColor(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 10),
-                      child: Text("Add Story"),
-                    )
-                  ],
-                ),
-                ...statusUsers.map((user) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundImage: NetworkImage(user["imageUrl"]!),
-                        ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        Text(
-                          user["name"]!.split(' ').first,
-                          style: TextStyle(
-                            color: _themeColors.textColor(context),
-                          ),
-                        )
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
-              "Chats",
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: _themeColors.textColor(context)),
-            ),
-          ),
           Expanded(
             child: ListView.builder(
-              itemCount: users.length,
+              itemCount: usersWithMessages.length,
               itemBuilder: (context, index) {
-                final user = users[index];
+                final usersWithMsg = usersWithMessages[index];
                 return InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            UserChatScreen(user: users[index]),
+                            UserChatScreen(user: usersWithMsg.user),
                       ),
-                    );
+                    ).whenComplete(() {
+                      setState(() {
+                        getUsers();
+                      });
+                    });
                   },
                   child: ListTile(
                     leading: CircleAvatar(
                       radius: 30,
-                      backgroundImage: NetworkImage(user["imageUrl"]!),
+                      backgroundImage: usersWithMsg.user.profileImageUrl != null
+                          ? NetworkImage(usersWithMsg.user.profileImageUrl!)
+                          : const NetworkImage(
+                              "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFdoXe8AoCq0BUuu6LhgSGqwUdMUwdLdyPnQ&s"),
                     ),
-                    title: Text(user["name"]!,
+                    title: Text(usersWithMsg.user.userName ?? 'Unknown User',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(user["lastMessage"]!),
+                    subtitle: Text(
+                      usersWithMsg.lastMessage,
+                      maxLines: 1,
+                      overflow: TextOverflow
+                          .ellipsis, // This will hide remaining text
+                    ),
                   ),
                 );
               },
             ),
-          ),
+          )
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -285,7 +228,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
             builder: (context) {
               return const SearchScreen();
             },
-          ));
+          )).whenComplete(() {
+            setState(() {
+              getUsers();
+            });
+          });
         },
         foregroundColor: Colors.white,
         splashColor: Colors.blueAccent,

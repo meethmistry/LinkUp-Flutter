@@ -17,3 +17,20 @@ class LoadingIndicator {
     EasyLoading.dismiss();
   }
 }
+
+class LoadingIndicatorSent {
+  static void show({required String status}) {
+    EasyLoading.show(
+      indicator: CircularProgressIndicator(
+        color: ThemeColors().blueColor,
+        backgroundColor: Colors.white,
+      ),
+      status: status,
+    );
+  }
+
+  static void dismiss() {
+    EasyLoading.dismiss();
+  }
+}
+

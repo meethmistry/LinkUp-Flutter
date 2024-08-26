@@ -1,0 +1,121 @@
+
+final List<Map<String, String>> usersDummy = [
+    {
+      "name": "User One",
+      "lastMessage": "This is Last Message",
+      "email": "userone12@gmail.com",
+      "isStatus": "true",
+      "imageUrl":
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFdoXe8AoCq0BUuu6LhgSGqwUdMUwdLdyPnQ&s"
+    },
+    {
+      "name": "User Two",
+      "lastMessage": "This is Last Message",
+      "email": "usertwo12@gmail.com",
+      "isStatus": "false",
+      "imageUrl":
+          "https://www.shutterstock.com/image-vector/default-user-profile-icon-vector-260nw-2422228925.jpg"
+    },
+    {
+      "name": "User Three",
+      "lastMessage": "This is Last Message",
+      "email": "userthree12@gmail.com",
+      "isStatus": "true",
+      "imageUrl":
+          "https://w7.pngwing.com/pngs/867/694/png-transparent-user-profile-default-computer-icons-network-video-recorder-avatar-cartoon-maker-blue-text-logo.png"
+    },
+  ];
+
+
+    final statusUsers =
+        usersDummy.where((user) => user["isStatus"] == "true").toList();
+
+
+
+
+  SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 15, right: 7),
+                          child: CircleAvatar(
+                            radius: 35,
+                            backgroundColor: Colors.grey,
+                            foregroundColor: _themeColors.iconColor(context),
+                          ),
+                        ),
+                        Positioned(
+                          top: 45,
+                          left: 63,
+                          child: InkWell(
+                            onTap: () {},
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _themeColors.blueColor),
+                              child: Icon(
+                                Icons.add,
+                                size: 15,
+                                color:
+                                    _themeColors.themeBasedIconColor(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: Text("Add Story"),
+                    )
+                  ],
+                ),
+                ...statusUsers.map((user) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 35,
+                          backgroundImage: NetworkImage(user["imageUrl"]!),
+                        ),
+                        const SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          user["name"]!.split(' ').first,
+                          style: TextStyle(
+                            color: _themeColors.textColor(context),
+                          ),
+                        )
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Text(
+              "Chats",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: _themeColors.textColor(context)),
+            ),
+          ),

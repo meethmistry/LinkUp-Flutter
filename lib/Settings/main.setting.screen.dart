@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,7 +20,9 @@ import 'package:linkup/Utilities/Snack_Bar/add.account.snackbar.dart';
 import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
 import 'package:http/http.dart' as http;
 import 'package:linkup/splash.screen.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path/path.dart' as path;
 
 class MainSettingScreen extends StatefulWidget {
   const MainSettingScreen({super.key});
@@ -135,6 +138,30 @@ class _MainSettingScreenState extends State<MainSettingScreen> {
     }
   }
 
+  Future<void> _shareApk(BuildContext context) async {
+    try {
+      final buildDirectory =
+          Directory('/data/data/com.example.linkup/app_flutter');
+      final apkPath = path.join(buildDirectory.path, 'app-release.apk');
+      final File apkFile = File(apkPath);
+
+      if (await apkFile.exists()) {
+        Share.shareXFiles([XFile(apkFile.path)],
+            text: 'Check out this amazing app!');
+      } else {
+        CustomSnackbar(
+          text: 'APK file not found',
+          color: _themeColors.snackBarRed(context),
+        ).show(context);
+      }
+    } catch (e) {
+      CustomSnackbar(
+        text: 'Error sharing APK: $e',
+        color: _themeColors.snackBarRed(context),
+      ).show(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -247,6 +274,14 @@ class _MainSettingScreenState extends State<MainSettingScreen> {
             text: "Call & Video Chat History",
             onTap: () {
               _navigation(CallOrVideoChatHistory());
+            },
+          ),
+          CustomRowItem(
+            leadingIcon: Icons.share,
+            isMain: true,
+            text: "Share Link Up",
+            onTap: () {
+              _shareApk(context);
             },
           ),
           CustomRowItem(

@@ -44,7 +44,7 @@ class UserFirebase {
             ? DateTime.parse(json['lastUpdatedAt'])
             : null,
         profileImageUrl:
-            json['profileImageUrl'], // Parse the new field from JSON
+            json['profileImage'], // Parse the new field from JSON
       );
 
   // Method to convert an instance to JSON
@@ -59,9 +59,19 @@ class UserFirebase {
         'lastSeen': lastSeen?.toIso8601String(),
         'createdAt': createdAt?.toIso8601String(),
         'lastUpdatedAt': lastUpdatedAt?.toIso8601String(),
-        'profileImageUrl':
+        'profileImage':
             profileImageUrl, // Include the new field in the JSON output
       };
 }
 
 
+// show users with last message
+class UserWithMessage {
+  UserFirebase user;
+  String lastMessage;
+
+  UserWithMessage({
+    required this.user,
+    required this.lastMessage,
+  });
+}

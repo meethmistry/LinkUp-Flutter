@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Theme/app.theme.dart';
 
 class OtherUserProfileScreen extends StatefulWidget {
-  final Map<String, String> user;
+  final UserFirebase user;
 
   const OtherUserProfileScreen({super.key, required this.user});
 
@@ -23,11 +24,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
           const SizedBox(height: 20),
           CircleAvatar(
             radius: 60,
-            backgroundImage: NetworkImage(widget.user['imageUrl']!),
+            backgroundImage: NetworkImage(widget.user.profileImageUrl!),
           ),
           const SizedBox(height: 20),
           Text(
-            widget.user['name']!,
+            widget.user.userName!,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -36,22 +37,14 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            widget.user['email']!,
+            widget.user.email!,
             style: TextStyle(
               fontSize: 16,
               color: _themeColors.textColor(context),
             ),
           ),
           const SizedBox(height: 10),
-          Text(
-            widget.user['isStatus'] == "true" ? "Online" : "Offline",
-            style: TextStyle(
-              fontSize: 14,
-              color:
-                  widget.user['isStatus'] == "true" ? Colors.green : Colors.red,
-            ),
-          ),
-          const SizedBox(height: 20),
+         
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

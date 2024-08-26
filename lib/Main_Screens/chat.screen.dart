@@ -1,11 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:linkup/Controllers/chat.controller.dart';
+import 'package:linkup/Controllers/message.controller.dart';
+import 'package:linkup/Controllers/user.controller.dart';
+import 'package:linkup/Main_Screens/Sub%20Screen%20For%20Shere/shere.image.dart';
 import 'package:linkup/Main_Screens/other.profile.screen.dart';
+import 'package:linkup/Models/message.model.dart';
+import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Providers/font.provider.dart';
 import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Utilities/Snack_Bar/shere.options.dart';
 
 class UserChatScreen extends StatefulWidget {
-  final Map<String, String> user;
+  final UserFirebase user;
 
   const UserChatScreen({Key? key, required this.user}) : super(key: key);
 
@@ -16,10 +26,67 @@ class UserChatScreen extends StatefulWidget {
 class _UserChatScreenState extends State<UserChatScreen> {
   final TextEditingController _messageText = TextEditingController();
   final FontSizeProvider fontSizeProvider = FontSizeProvider();
+  final ChatFirebaseController _chatFirebaseController =
+      ChatFirebaseController();
+
+  final MessageFirebaseController _messageFirebaseController =
+      MessageFirebaseController();
+
+  final UserFirebaseController _userFirebaseController =
+      UserFirebaseController();
+
   @override
   void initState() {
     super.initState();
+    _messageText.addListener(() {
+      setState(() {
+        _containerHeight = _calculateHeight();
+      });
+    });
+    getOtherId();
     _messageText.addListener(_updateIcon);
+  }
+
+  late String otherUserId;
+  late String? chatId;
+  late List<MessageFirebase> messages = []; // Initialize with empty list
+  final ScrollController _scrollController = ScrollController();
+  getOtherId() async {
+    otherUserId = widget.user.id!;
+    chatId = await _chatFirebaseController.getChatIdForCurrentUser(otherUserId);
+    if (chatId != null) {
+      await getMessagesForThisChat(chatId!);
+      // Scroll to the bottom after fetching messages
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    }
+  }
+
+  getMessagesForThisChat(String chatId) async {
+    try {
+      final fetchedMessages =
+          await _messageFirebaseController.getMessagesByChatId(chatId);
+      setState(() {
+        messages = fetchedMessages;
+      });
+      // Scroll to the bottom after updating the messages
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+      });
+    } catch (e) {
+      print('Error retrieving messages: $e');
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
@@ -33,7 +100,66 @@ class _UserChatScreenState extends State<UserChatScreen> {
     setState(() {});
   }
 
+  double _containerHeight = 50;
+  double _calculateHeight() {
+    final textHeight =
+        _messageText.text.isEmpty ? 50.0 : _messageText.text.length * 2.0;
+    return textHeight.clamp(50.0, 200.0); // Use double literals
+  }
+
   final ThemeColors _themeColors = ThemeColors();
+
+  void _pickImage(ImageSource source) async {
+    final imageBytes =
+        await _messageFirebaseController.pickImageToShere(source);
+    if (imageBytes != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShareImagePage(
+            imageBytes: imageBytes,
+            chatId: chatId!,
+            otherUserId: otherUserId,
+          ),
+        ),
+      ).whenComplete(() {
+        getMessagesForThisChat(chatId!);
+      });
+    }
+  }
+
+// for show timestamp
+  String formatTimestamp(String timestamp) {
+    DateTime dateTime = DateTime.parse(timestamp);
+    return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  bool isToday(String dateToCompare) {
+    DateTime now = DateTime.now();
+    DateFormat formatter = DateFormat('MMMM d, yyyy');
+    String currentDate = formatter.format(now);
+    return currentDate == dateToCompare;
+  }
+
+  bool isYesterday(String dateToCompare) {
+    DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+    DateFormat formatter = DateFormat('MMMM d, yyyy');
+    String yesterdayDate = formatter.format(yesterday);
+    return yesterdayDate == dateToCompare;
+  }
+
+  String _getFormattedDateHeader(DateTime timestamp) {
+    DateFormat formatter = DateFormat('MMMM d, yyyy');
+    String timeStamp = formatter.format(timestamp);
+    if (isToday(timeStamp)) {
+      return 'Today';
+    } else if (isYesterday(timeStamp)) {
+      return 'Yesterday';
+    } else {
+      return DateFormat('MMMM d, yyyy').format(timestamp);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,7 +175,10 @@ class _UserChatScreenState extends State<UserChatScreen> {
               const Icon(Icons.arrow_back),
               Flexible(
                 child: CircleAvatar(
-                  backgroundImage: NetworkImage(widget.user['imageUrl']!),
+                  backgroundImage: widget.user.profileImageUrl != null
+                      ? NetworkImage(widget.user.profileImageUrl!)
+                      : const NetworkImage(
+                          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRFdoXe8AoCq0BUuu6LhgSGqwUdMUwdLdyPnQ&s"),
                 ),
               ),
             ],
@@ -69,7 +198,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.user['name']!,
+                widget.user.userName!,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
                 style:
@@ -107,7 +236,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   // Handle video action
                   break;
                 case 'share':
-                  // Handle share action
+                // Handle share action
               }
             },
             color: _themeColors.containerColor(context),
@@ -128,8 +257,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   value: 'call',
                   child: Row(
                     children: [
-                      Icon(Icons.phone,
-                          color: _themeColors.iconColor(context)),
+                      Icon(Icons.phone, color: _themeColors.iconColor(context)),
                       const SizedBox(width: 8),
                       const Text('Call'),
                     ],
@@ -146,12 +274,11 @@ class _UserChatScreenState extends State<UserChatScreen> {
                     ],
                   ),
                 ),
-                 PopupMenuItem(
+                PopupMenuItem(
                   value: 'share',
                   child: Row(
                     children: [
-                      Icon(Icons.share,
-                          color: _themeColors.iconColor(context)),
+                      Icon(Icons.share, color: _themeColors.iconColor(context)),
                       const SizedBox(width: 8),
                       const Text('Share'),
                     ],
@@ -162,13 +289,148 @@ class _UserChatScreenState extends State<UserChatScreen> {
           ),
         ],
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Center(
-            child: Text(
-              "Chat content goes here",
-              style: TextStyle(fontSize: fontSizeProvider.fontSize),
+          Expanded(
+            child: ListView.builder(
+              controller: _scrollController,
+              reverse: true,
+              itemCount: messages.length,
+              itemBuilder: (context, index) {
+                final message = messages[index];
+                final messageDate = DateFormat('yyyy-MM-dd')
+                    .format(message.timestamp as DateTime);
+                final previousMessageDate = index < messages.length - 1
+                    ? DateFormat('yyyy-MM-dd')
+                        .format(messages[index + 1].timestamp as DateTime)
+                    : null;
+
+                bool showDateHeader = messageDate != previousMessageDate;
+
+                return Column(
+                  crossAxisAlignment:
+                      message.senderId == FirebaseAuth.instance.currentUser!.uid
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                  children: [
+                    if (showDateHeader)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Center(
+                          child: Text(
+                            _getFormattedDateHeader(message.timestamp!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ListTile(
+                      title: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: message.senderId! ==
+                                FirebaseAuth.instance.currentUser!.uid
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Stack(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.only(
+                                      left: 15, right: 10, top: 8, bottom: 15),
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 3, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      width: 1.5,
+                                      color: _themeColors.blueColor,
+                                    ),
+                                    borderRadius:
+                                        message.messageType == MessageType.text
+                                            ? BorderRadius.circular(25)
+                                            : BorderRadius.circular(5),
+                                  ),
+                                  constraints: BoxConstraints(
+                                    maxWidth:
+                                        MediaQuery.of(context).size.width * 0.7,
+                                    minWidth: 100,
+                                  ),
+                                  child: Builder(
+                                    builder: (context) {
+                                      Widget messageContent;
+
+                                      switch (message.messageType) {
+                                        case MessageType.text:
+                                          // Display text
+                                          messageContent = Text(
+                                            message.content!,
+                                            style: TextStyle(
+                                                fontSize:
+                                                    fontSizeProvider.fontSize),
+                                            softWrap: true,
+                                            overflow: TextOverflow.visible,
+                                          );
+                                          break;
+
+                                        case MessageType.image:
+                                          // Display network image
+                                          messageContent = InkWell(
+                                            onTap: () {
+                                              if (message.content != null) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ShareImagePage(
+                                                            imageUrl: message
+                                                                .content),
+                                                  ),
+                                                ).whenComplete(() {
+                                                  getMessagesForThisChat(
+                                                      chatId!);
+                                                });
+                                              }
+                                            },
+                                            child: Image.network(
+                                              message.content!,
+                                              fit: BoxFit.cover,
+                                            ),
+                                          );
+                                          break;
+
+                                        default:
+                                          // Default case
+                                          messageContent = Container();
+                                      }
+
+                                      return messageContent;
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                    bottom: 5,
+                                    right: 18,
+                                    child: Text(
+                                      formatTimestamp(
+                                          message.timestamp.toString()),
+                                      style: const TextStyle(fontSize: 9),
+                                    ))
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
+          ),
+          const SizedBox(
+            height: 50,
           ),
         ],
       ),
@@ -177,72 +439,120 @@ class _UserChatScreenState extends State<UserChatScreen> {
         color: Colors.transparent,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.only(right: 20),
               alignment: Alignment.center,
-              height: 50,
+              height: _containerHeight,
+              constraints: const BoxConstraints(
+                minHeight: 50,
+                maxHeight: 200,
+              ),
               width: MediaQuery.sizeOf(context).width - 60,
               decoration: BoxDecoration(
                 color: _themeColors.searchFilledColor(context),
                 borderRadius: BorderRadius.circular(40),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  SizedBox(
-                    width: MediaQuery.sizeOf(context).width - 140,
-                    child: TextField(
-                      controller: _messageText,
-                      autofocus: true,
-                      cursorColor: _themeColors.blueColor,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        hintStyle: TextStyle(
-                          fontSize: 18,
+              child: IntrinsicHeight(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.sizeOf(context).width - 140,
+                      child: TextField(
+                        controller: _messageText,
+                        autofocus: true,
+                        minLines: 1,
+                        maxLines: null,
+                        cursorColor: _themeColors.blueColor,
+                        decoration: InputDecoration(
+                          hintText: 'Type a message...',
+                          hintStyle: TextStyle(
+                            fontSize: 18,
+                            color: _themeColors.textColor(context),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.message,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        style: TextStyle(
                           color: _themeColors.textColor(context),
                         ),
-                        prefixIcon: const Icon(
-                          Icons.message,
-                        ),
-                        border: InputBorder.none,
-                      ),
-                      style: TextStyle(
-                        color: _themeColors.textColor(context),
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 60,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                            onTap: () {},
-                            child: const Icon(CupertinoIcons.paperclip)),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        InkWell(
-                            onTap: () {},
-                            child: const Icon(CupertinoIcons.camera)),
-                      ],
+                    SizedBox(
+                      width: 60,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          InkWell(
+                              onTap: () {
+                                ShereOptions(
+                                  onDocuments: () => print('Documents pressed'),
+                                  onCamera: () =>
+                                      _pickImage(ImageSource.camera),
+                                  onGallery: () =>
+                                      _pickImage(ImageSource.gallery),
+                                  onAudio: () => print('Audio pressed'),
+                                  onLocation: () => print("Location"),
+                                  onContact: () => print('Contact pressed'),
+                                ).show(context);
+                              },
+                              child: const Icon(CupertinoIcons.paperclip)),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          InkWell(
+                              onTap: () {
+                                _pickImage(ImageSource.camera);
+                              },
+                              child: const Icon(CupertinoIcons.camera)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-            Container(
-              padding: const EdgeInsets.all(12),
-              width: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _themeColors.blueColor,
-              ),
-              child: Icon(
-                _messageText.text.isEmpty ? Icons.mic : Icons.send,
-                color: Colors.white,
-                size: 25,
+            InkWell(
+              onTap: () async {
+                if (_messageText.text.isNotEmpty) {
+                  if (chatId != null) {
+                    await _messageFirebaseController
+                        .sendMessage(
+                      chatId: chatId!,
+                      receiverId: otherUserId,
+                      messageType: MessageType.text,
+                      content: _messageText.text,
+                    )
+                        .whenComplete(() {
+                      setState(() {
+                        _chatFirebaseController.updateChatLastMessage(
+                            _messageText.text, chatId!);
+                        _userFirebaseController.addChatId(chatId!, otherUserId);
+                      });
+                    });
+                    _messageText.text = "";
+                    getMessagesForThisChat(chatId!);
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                width: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _themeColors.blueColor,
+                ),
+                child: Icon(
+                  _messageText.text.isEmpty ? Icons.mic : Icons.send,
+                  color: Colors.white,
+                  size: 25,
+                ),
               ),
             ),
           ],
