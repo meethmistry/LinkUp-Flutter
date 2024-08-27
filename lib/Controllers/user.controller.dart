@@ -289,87 +289,121 @@ class UserFirebaseController {
   }
 
 //show users on chat list screen
-Future<List<UserWithMessage>> getChatUsers() async {
-  try {
-    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+  Future<List<UserWithMessage>> getChatUsers() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-    // Retrieve the current user's chat IDs
-    final currentUserSnapshot =
-        await _fireStore.collection('users').doc(currentUserId).get();
-    final currentUserChats =
-        List<String>.from(currentUserSnapshot['chats'] ?? []);
+      // Retrieve the current user's chat IDs
+      final currentUserSnapshot =
+          await _fireStore.collection('users').doc(currentUserId).get();
+      final currentUserChats =
+          List<String>.from(currentUserSnapshot['chats'] ?? []);
 
-    if (currentUserChats.isEmpty) {
-      return [];
-    }
-
-    // Fetch users who have chat IDs that match the current user's chats
-    final userSnapshot = await _fireStore
-        .collection('users')
-        .where('chats', arrayContainsAny: currentUserChats)
-        .get();
-
-    // Map the user documents to UserFirebase objects and exclude the current user
-    final users = userSnapshot.docs
-        .map((doc) =>
-            UserFirebase.fromJson(doc.data() as Map<String, dynamic>))
-        .where((user) => user.id != currentUserId)
-        .toList();
-
-    // Fetch chats related to current user's chats
-    final chatSnapshots = await _fireStore
-        .collection('chats')
-        .where(FieldPath.documentId, whereIn: currentUserChats)
-        .get();
-
-    // Map chat documents to ChatFirebase objects
-    final chats = chatSnapshots.docs
-        .map((doc) => ChatFirebase.fromJson(doc.data() as Map<String, dynamic>))
-        .toList();
-
-    // Create a list to hold users with their last message
-    final usersWithMessages = <UserWithMessage>[];
-
-    for (final user in users) {
-      String lastMessage = "No message"; // Default message if none found
-      if (user.chats != null) {
-        for (final chatId in user.chats!) {
-          final chat = chats.firstWhere(
-              (chat) => chat.id == chatId,
-              orElse: () => ChatFirebase()); // Fallback if chat is not found
-          
-          if (chat.lastMessage != null) {
-            lastMessage = chat.lastMessage!;
-          }
-        }
+      if (currentUserChats.isEmpty) {
+        return [];
       }
 
-      // Add the user with the last message to the list
-      usersWithMessages.add(UserWithMessage(
-        user: user,
-        lastMessage: lastMessage,
-      ));
+      // Fetch users who have chat IDs that match the current user's chats
+      final userSnapshot = await _fireStore
+          .collection('users')
+          .where('chats', arrayContainsAny: currentUserChats)
+          .get();
+
+      // Map the user documents to UserFirebase objects and exclude the current user
+      final users = userSnapshot.docs
+          .map((doc) =>
+              UserFirebase.fromJson(doc.data() as Map<String, dynamic>))
+          .where((user) => user.id != currentUserId)
+          .toList();
+
+      // Fetch chats related to current user's chats
+      final chatSnapshots = await _fireStore
+          .collection('chats')
+          .where(FieldPath.documentId, whereIn: currentUserChats)
+          .get();
+
+      // Map chat documents to ChatFirebase objects
+      final chats = chatSnapshots.docs
+          .map((doc) =>
+              ChatFirebase.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+
+      // Create a list to hold users with their last message
+      final usersWithMessages = <UserWithMessage>[];
+
+      for (final user in users) {
+        String lastMessage = "No message"; // Default message if none found
+        if (user.chats != null) {
+          for (final chatId in user.chats!) {
+            final chat = chats.firstWhere((chat) => chat.id == chatId,
+                orElse: () => ChatFirebase()); // Fallback if chat is not found
+
+            if (chat.lastMessage != null) {
+              lastMessage = chat.lastMessage!;
+            }
+          }
+        }
+
+        // Add the user with the last message to the list
+        usersWithMessages.add(UserWithMessage(
+          user: user,
+          lastMessage: lastMessage,
+        ));
+      }
+
+      // Sort users based on the order of chat IDs in currentUserChats
+      usersWithMessages.sort((a, b) {
+        final aIndex = a.user.chats != null
+            ? currentUserChats.indexWhere((id) => a.user.chats!.contains(id))
+            : -1;
+        final bIndex = b.user.chats != null
+            ? currentUserChats.indexWhere((id) => b.user.chats!.contains(id))
+            : -1;
+
+        return aIndex.compareTo(bIndex);
+      });
+
+      return usersWithMessages;
+    } catch (e) {
+      print('Error searching users: $e');
+      return [];
     }
-
-    // Sort users based on the order of chat IDs in currentUserChats
-    usersWithMessages.sort((a, b) {
-      final aIndex = a.user.chats != null
-          ? currentUserChats.indexWhere((id) => a.user.chats!.contains(id))
-          : -1;
-      final bIndex = b.user.chats != null
-          ? currentUserChats.indexWhere((id) => b.user.chats!.contains(id))
-          : -1;
-
-      return aIndex.compareTo(bIndex);
-    });
-
-    return usersWithMessages;
-  } catch (e) {
-    print('Error searching users: $e');
-    return [];
   }
-}
 
+//show users on chat list screen
+  Future<List<UserFirebase>> getChatUsersForMultipalShere() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+      // Retrieve the current user's chat IDs
+      final currentUserSnapshot =
+          await _fireStore.collection('users').doc(currentUserId).get();
+      final currentUserChats =
+          List<String>.from(currentUserSnapshot['chats'] ?? []);
+
+      if (currentUserChats.isEmpty) {
+        return [];
+      }
+
+      // Fetch users who have chat IDs that match the current user's chats
+      final userSnapshot = await _fireStore
+          .collection('users')
+          .where('chats', arrayContainsAny: currentUserChats)
+          .get();
+
+      // Map the user documents to UserFirebase objects and exclude the current user
+      final users = userSnapshot.docs
+          .map((doc) =>
+              UserFirebase.fromJson(doc.data() as Map<String, dynamic>))
+          .where((user) => user.id != currentUserId)
+          .toList();
+
+      return users;
+    } catch (e) {
+      print('Error searching users: $e');
+      return [];
+    }
+  }
 
   Future<String> addChatId(String chatId, String otherUserId) async {
     String res = "";

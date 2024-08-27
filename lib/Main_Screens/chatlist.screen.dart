@@ -9,7 +9,7 @@ import 'package:linkup/Main_Screens/user.profile.screen.dart';
 import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Settings/main.setting.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
-// import 'package:linkup/Utilities/Dialog_Box/selecte.multiple.user.to.shere.msg.dart';
+import 'package:linkup/Utilities/Dialog_Box/selecte.multiple.user.to.shere.msg.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -41,6 +41,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   }
 
   List<UserWithMessage> usersWithMessages = [];
+  List<UserFirebase> users = [];
   @override
   void initState() {
     super.initState();
@@ -51,6 +52,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     try {
       List<UserWithMessage> fetchedUsers =
           await _userFirebaseController.getChatUsers();
+      users = await _userFirebaseController.getChatUsersForMultipalShere();
       setState(() {
         usersWithMessages = fetchedUsers;
       });
@@ -63,10 +65,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final imageBytes =
         await _messageFirebaseController.pickImageToShere(source);
     if (imageBytes != null) {
-      // SendMessageToMultipleUser(
-      //   users: users,
-      //   imageBytes: imageBytes,
-      // ).show(context);
+      SendMessageToMultipleUser(
+        users: users,
+        imageBytes: imageBytes,
+      ).show(context);
     }
   }
 

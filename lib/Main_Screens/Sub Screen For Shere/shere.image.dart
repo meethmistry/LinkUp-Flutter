@@ -48,7 +48,7 @@ class _ShareImagePageState extends State<ShareImagePage> {
           .whenComplete(() {
         setState(() {
           _chatFirebaseController.updateChatLastMessage(
-              "Image", widget.chatId!);
+              "📷 Image", widget.chatId!);
           _userFirebaseController.addChatId(
               widget.chatId!, widget.otherUserId!);
         });

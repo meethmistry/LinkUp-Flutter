@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:linkup/Controllers/chat.controller.dart';
 import 'package:linkup/Controllers/message.controller.dart';
+import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Models/message.model.dart';
 import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Theme/app.theme.dart';
@@ -36,6 +37,8 @@ class _SettingsDialogBoxState extends State<SendMessageToMultipleUser> {
       ChatFirebaseController();
   final MessageFirebaseController _messageFirebaseController =
       MessageFirebaseController();
+  final UserFirebaseController _userFirebaseController =
+      UserFirebaseController();
 
   @override
   void initState() {
@@ -63,22 +66,29 @@ class _SettingsDialogBoxState extends State<SendMessageToMultipleUser> {
     });
   }
 
-  List<String> userId = [];
+  List<String> receiverId = [];
 
   _sendImage() async {
     LoadingIndicatorSent.show(status: "Sending...");
-    for (var id in userId) {
+    for (var id in receiverId) {
       String? chatId =
           await _chatFirebaseController.getChatIdForCurrentUser(id);
       print(chatId);
       if (chatId != null) {
-        // final imageUrl = await _messageFirebaseController
-        //     .uploadSheredImageToStorage(widget.imageBytes);
-        // await _messageFirebaseController.sendMessage(
-        //   chatId: chatId,
-        //   messageType: MessageType.image,
-        //   content: imageUrl!,
-        // );
+        final imageUrl = await _messageFirebaseController
+            .uploadSheredImageToStorage(widget.imageBytes);
+        await _messageFirebaseController
+            .sendMessage(
+          chatId: chatId,
+          receiverId: id,
+          messageType: MessageType.image,
+          content: imageUrl!,
+        ).whenComplete(() {
+          setState(() {
+            _chatFirebaseController.updateChatLastMessage("📷 Image", chatId);
+            _userFirebaseController.addChatId(chatId, id);
+          });
+        });
       }
     }
     LoadingIndicatorSent.dismiss();
@@ -135,17 +145,17 @@ class _SettingsDialogBoxState extends State<SendMessageToMultipleUser> {
                     ),
                     title: Text(user.userName!),
                     trailing: Checkbox(
-                      value: userId.contains(user.id),
+                      value: receiverId.contains(user.id),
                       activeColor: _themeColors.blueColor,
                       onChanged: (bool? value) {
                         setState(() {
                           if (value == true) {
-                            if (!userId.contains(user.id)) {
-                              userId.add(user.id!);
+                            if (!receiverId.contains(user.id)) {
+                              receiverId.add(user.id!);
                             }
                           } else if (value == false) {
-                            if (userId.contains(user.id)) {
-                              userId.remove(user.id!);
+                            if (receiverId.contains(user.id)) {
+                              receiverId.remove(user.id!);
                             }
                           }
                         });
