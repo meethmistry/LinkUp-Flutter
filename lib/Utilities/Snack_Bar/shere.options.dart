@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:linkup/Theme/app.theme.dart';
 
 class ShereOptions {
-  final VoidCallback? onDocuments;
+  final VoidCallback? onVideos;
   final VoidCallback? onCamera;
   final VoidCallback? onGallery;
   final VoidCallback? onAudio;
-  final VoidCallback? onLocation;
+  final VoidCallback? onDocuments;
   final VoidCallback? onContact;
 
   ShereOptions({
-    this.onDocuments,
+    this.onVideos,
     this.onCamera,
     this.onGallery,
     this.onAudio,
-    this.onLocation,
+    this.onDocuments,
     this.onContact,
   });
 
@@ -30,9 +30,9 @@ class ShereOptions {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               CustomIconButton(
-                onTap: onDocuments,
-                text: 'Files',
-                icon: Icons.insert_drive_file,
+                onTap: onVideos,
+                text: 'Videos',
+                icon: Icons.video_camera_back,
                 containerColor: Colors.blueAccent,
                 textColor: _themeColors.textColor(context),
               ),
@@ -66,9 +66,9 @@ class ShereOptions {
                 textColor: _themeColors.textColor(context),
               ),
               CustomIconButton(
-                onTap: onLocation,
-                text: 'Location',
-                icon: Icons.location_on,
+                onTap: onDocuments,
+                text: 'Documents',
+                icon: Icons.insert_drive_file,
                 containerColor: Colors.orange,
                 textColor: _themeColors.textColor(context),
               ),

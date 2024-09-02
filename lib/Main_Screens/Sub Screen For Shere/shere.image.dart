@@ -12,13 +12,15 @@ class ShareImagePage extends StatefulWidget {
   final String? chatId;
   final String? imageUrl;
   final String? otherUserId;
+  final String? fileName;
 
   ShareImagePage(
       {super.key,
       this.imageBytes,
       this.chatId,
       this.imageUrl,
-      this.otherUserId});
+      this.otherUserId,
+      this.fileName});
 
   @override
   _ShareImagePageState createState() => _ShareImagePageState();
@@ -44,6 +46,7 @@ class _ShareImagePageState extends State<ShareImagePage> {
         receiverId: widget.otherUserId!,
         messageType: MessageType.image,
         content: imageUrl,
+        fileName: widget.fileName,
       )
           .whenComplete(() {
         setState(() {

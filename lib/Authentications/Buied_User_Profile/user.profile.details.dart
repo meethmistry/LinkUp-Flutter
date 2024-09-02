@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/Authentications/Buied_User_Profile/profile.image.widget.dart';
 import 'package:linkup/Controllers/user.controller.dart';
-import 'package:linkup/Main_Screens/chatlist.screen.dart';
+import 'package:linkup/Main_Screens/main.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Theme/loading.indicator.dart';
 import 'package:linkup/Utilities/Dialog_Box/custom.dialogbox.dart';
@@ -61,7 +61,7 @@ class _SignUpScreenState extends State<BuiledUserProfile> {
 
           Navigator.push(context, MaterialPageRoute(
             builder: (context) {
-              return ChatListScreen();
+              return MainScreen();
             },
           ));
         } catch (e) {

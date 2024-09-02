@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:linkup/Authentications/login.screen.dart';
-import 'package:linkup/Main_Screens/chatlist.screen.dart';
+import 'package:linkup/Main_Screens/main.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (user != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ChatListScreen()),
+        MaterialPageRoute(builder: (context) => MainScreen()),
       );
     } else {
       Navigator.pushReplacement(

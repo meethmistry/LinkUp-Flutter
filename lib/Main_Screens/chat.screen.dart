@@ -1,3 +1,6 @@
+// ignore_for_file: avoid_init_to_null
+
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,13 +9,16 @@ import 'package:intl/intl.dart';
 import 'package:linkup/Controllers/chat.controller.dart';
 import 'package:linkup/Controllers/message.controller.dart';
 import 'package:linkup/Controllers/user.controller.dart';
+import 'package:linkup/Main_Screens/Sub%20Screen%20For%20Shere/shere.document.dart';
 import 'package:linkup/Main_Screens/Sub%20Screen%20For%20Shere/shere.image.dart';
+import 'package:linkup/Main_Screens/Sub%20Screen%20For%20Shere/shere.video.dart';
 import 'package:linkup/Main_Screens/other.profile.screen.dart';
 import 'package:linkup/Models/message.model.dart';
 import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Providers/font.provider.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Utilities/Snack_Bar/shere.options.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 class UserChatScreen extends StatefulWidget {
   final UserFirebase user;
@@ -109,15 +115,20 @@ class _UserChatScreenState extends State<UserChatScreen> {
 
   final ThemeColors _themeColors = ThemeColors();
 
+  // For images
   void _pickImage(ImageSource source) async {
     final imageBytes =
         await _messageFirebaseController.pickImageToShere(source);
     if (imageBytes != null) {
+      // Extract file name
+      final fileName = 'image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ShareImagePage(
             imageBytes: imageBytes,
+            fileName: fileName, // Pass file name
             chatId: chatId!,
             otherUserId: otherUserId,
           ),
@@ -126,6 +137,56 @@ class _UserChatScreenState extends State<UserChatScreen> {
         getMessagesForThisChat(chatId!);
       });
     }
+  }
+
+// For videos
+  void _pickVideo(ImageSource source) async {
+    final videoFile = await _messageFirebaseController.pickVideoToShare(source);
+    if (videoFile != null) {
+      // Extract file name from the path
+      final fileName =
+          videoFile.name; // Use videoFile.name to get the file name
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ShareVideoPage(
+            videoFile: videoFile,
+            fileName: fileName, // Pass file name
+            chatId: chatId!,
+            otherUserId: otherUserId,
+          ),
+        ),
+      ).whenComplete(() {
+        getMessagesForThisChat(chatId!);
+      });
+    }
+  }
+
+  var _document;
+  var _fileName = null;
+  bool isShow = false;
+// Method to pick and share a document
+  void _pickDocument() async {
+    final documentFile = await _messageFirebaseController.pickDocumentToShare();
+    if (documentFile != null) {
+      // Extract file name from the document file
+      final fileName = documentFile.name;
+
+      _document = documentFile;
+      _fileName = fileName;
+      print(_fileName);
+      if (_fileName != null) {
+        setState(() {
+          isShow = true;
+        });
+      }
+    }
+  }
+
+  // Method to cancel the selected file
+  void _cancelSelection() {
+    setState(() {});
   }
 
 // for show timestamp
@@ -142,7 +203,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
   }
 
   bool isYesterday(String dateToCompare) {
-    DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+    DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
     DateFormat formatter = DateFormat('MMMM d, yyyy');
     String yesterdayDate = formatter.format(yesterday);
     return yesterdayDate == dateToCompare;
@@ -401,8 +462,88 @@ class _UserChatScreenState extends State<UserChatScreen> {
                                           );
                                           break;
 
+                                        case MessageType.video:
+                                          messageContent = InkWell(
+                                            onTap: () {
+                                              if (message.content != null) {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        ShareVideoPage(
+                                                      videoUrl: message.content,
+                                                    ),
+                                                  ),
+                                                ).whenComplete(() {
+                                                  getMessagesForThisChat(
+                                                      chatId!);
+                                                });
+                                              }
+                                            },
+                                            child: FutureBuilder<Widget>(
+                                              future: _generateVideoThumbnail(
+                                                  message.content!,
+                                                  context), // Generate thumbnail
+                                              builder: (context, snapshot) {
+                                                if (snapshot.connectionState ==
+                                                    ConnectionState.done) {
+                                                  if (snapshot.hasData) {
+                                                    return snapshot.data!;
+                                                  } else {
+                                                    return const Icon(Icons
+                                                        .error); // Handle error case
+                                                  }
+                                                } else {
+                                                  return const SizedBox
+                                                      .shrink(); // Loading indicator
+                                                }
+                                              },
+                                            ),
+                                          );
+                                          break;
+
+                                        case MessageType.file:
+                                          // Display text
+                                          messageContent = InkWell(
+                                            onTap: () {
+                                              print(message.content!);
+                                              Navigator.push(context,
+                                                  MaterialPageRoute(
+                                                builder: (context) {
+                                                  return ShareDocumentPage(
+                                                      docUrl: message.content!);
+                                                },
+                                              ));
+                                            },
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.insert_drive_file,
+                                                  color: Colors.redAccent,
+                                                  size: 40,
+                                                ),
+                                                const SizedBox(
+                                                    width:
+                                                        8), // Add some spacing between the icon and text
+                                                Expanded(
+                                                  child: Text(
+                                                    message.fileName!,
+                                                    style: const TextStyle(
+                                                        fontSize: 15),
+                                                    softWrap: true,
+
+                                                    maxLines:
+                                                        3, // Limit the text to 3 lines
+                                                    overflow: TextOverflow
+                                                        .ellipsis, // Add ellipsis for overflowing text
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          break;
+
                                         default:
-                                          // Default case
                                           messageContent = Container();
                                       }
 
@@ -429,8 +570,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
               },
             ),
           ),
-          const SizedBox(
-            height: 50,
+          SizedBox(
+            height: isShow ? 80 : 50,
           ),
         ],
       ),
@@ -441,83 +582,112 @@ class _UserChatScreenState extends State<UserChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.only(right: 20),
-              alignment: Alignment.center,
-              height: _containerHeight,
-              constraints: const BoxConstraints(
-                minHeight: 50,
-                maxHeight: 200,
-              ),
-              width: MediaQuery.sizeOf(context).width - 60,
-              decoration: BoxDecoration(
-                color: _themeColors.searchFilledColor(context),
-                borderRadius: BorderRadius.circular(40),
-              ),
-              child: IntrinsicHeight(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: MediaQuery.sizeOf(context).width - 140,
-                      child: TextField(
-                        controller: _messageText,
-                        autofocus: true,
-                        minLines: 1,
-                        maxLines: null,
-                        cursorColor: _themeColors.blueColor,
-                        decoration: InputDecoration(
-                          hintText: 'Type a message...',
-                          hintStyle: TextStyle(
-                            fontSize: 18,
+            if (!isShow)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.only(right: 20),
+                alignment: Alignment.center,
+                height: _containerHeight,
+                constraints: const BoxConstraints(
+                  minHeight: 50,
+                  maxHeight: 200,
+                ),
+                width: MediaQuery.sizeOf(context).width - 60,
+                decoration: BoxDecoration(
+                  color: _themeColors.searchFilledColor(context),
+                  borderRadius: BorderRadius.circular(40),
+                ),
+                child: IntrinsicHeight(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.sizeOf(context).width - 140,
+                        child: TextField(
+                          controller: _messageText,
+                          autofocus: true,
+                          minLines: 1,
+                          maxLines: null,
+                          cursorColor: _themeColors.blueColor,
+                          decoration: InputDecoration(
+                            hintText: 'Type a message...',
+                            hintStyle: TextStyle(
+                              fontSize: 18,
+                              color: _themeColors.textColor(context),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.message,
+                            ),
+                            border: InputBorder.none,
+                          ),
+                          style: TextStyle(
                             color: _themeColors.textColor(context),
                           ),
-                          prefixIcon: const Icon(
-                            Icons.message,
-                          ),
-                          border: InputBorder.none,
-                        ),
-                        style: TextStyle(
-                          color: _themeColors.textColor(context),
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      width: 60,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InkWell(
-                              onTap: () {
-                                ShereOptions(
-                                  onDocuments: () => print('Documents pressed'),
-                                  onCamera: () =>
-                                      _pickImage(ImageSource.camera),
-                                  onGallery: () =>
-                                      _pickImage(ImageSource.gallery),
-                                  onAudio: () => print('Audio pressed'),
-                                  onLocation: () => print("Location"),
-                                  onContact: () => print('Contact pressed'),
-                                ).show(context);
-                              },
-                              child: const Icon(CupertinoIcons.paperclip)),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          InkWell(
-                              onTap: () {
-                                _pickImage(ImageSource.camera);
-                              },
-                              child: const Icon(CupertinoIcons.camera)),
-                        ],
+                      SizedBox(
+                        width: 60,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                                onTap: () {
+                                  ShereOptions(
+                                    onVideos: () =>
+                                        _pickVideo(ImageSource.gallery),
+                                    onCamera: () =>
+                                        _pickImage(ImageSource.camera),
+                                    onGallery: () =>
+                                        _pickImage(ImageSource.gallery),
+                                    onAudio: () => print('Audio pressed'),
+                                    onDocuments: () => _pickDocument(),
+                                    onContact: () => print('Contact pressed'),
+                                  ).show(context);
+                                },
+                                child: const Icon(CupertinoIcons.paperclip)),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            InkWell(
+                                onTap: () {
+                                  _pickImage(ImageSource.camera);
+                                },
+                                child: const Icon(CupertinoIcons.camera)),
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+            if (isShow)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
+                width: MediaQuery.sizeOf(context).width - 70,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    const Icon(
+                      Icons.insert_drive_file,
+                      color: Colors.redAccent,
+                      size: 35,
+                    ),
+                    Text(_fileName)
+                  ],
+                ),
               ),
-            ),
             InkWell(
               onTap: () async {
                 if (_messageText.text.isNotEmpty) {
@@ -539,6 +709,30 @@ class _UserChatScreenState extends State<UserChatScreen> {
                     _messageText.text = "";
                     getMessagesForThisChat(chatId!);
                   }
+                } else if (isShow) {
+                  final docUrl = await _messageFirebaseController
+                      .uploadSharedDocumentToStorage(_document);
+                  await _messageFirebaseController
+                      .sendMessage(
+                    chatId: chatId!,
+                    receiverId: otherUserId,
+                    messageType: MessageType.file,
+                    content: docUrl!,
+                    fileName: _fileName,
+                  )
+                      .whenComplete(() {
+                    setState(() {
+                      _chatFirebaseController.updateChatLastMessage(
+                          "📃 Document", chatId!);
+                      _userFirebaseController.addChatId(chatId!, otherUserId);
+                    });
+                  });
+                  getMessagesForThisChat(chatId!);
+                  setState(() {
+                    isShow = false;
+                    _document = null;
+                    _fileName = null;
+                  });
                 }
               },
               child: Container(
@@ -549,7 +743,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   color: _themeColors.blueColor,
                 ),
                 child: Icon(
-                  _messageText.text.isEmpty ? Icons.mic : Icons.send,
+                  _messageText.text.isEmpty && !isShow ? Icons.mic : Icons.send,
                   color: Colors.white,
                   size: 25,
                 ),
@@ -559,5 +753,32 @@ class _UserChatScreenState extends State<UserChatScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<Widget> _generateVideoThumbnail(
+    String videoUrl, BuildContext context) async {
+  try {
+    final Uint8List? thumbnail = await VideoThumbnail.thumbnailData(
+      video: videoUrl,
+      imageFormat: ImageFormat.JPEG,
+      maxWidth: 128, // specify the width of the thumbnail
+      quality: 75,
+    );
+
+    if (thumbnail != null) {
+      return Container(
+          constraints: BoxConstraints(
+            minWidth: MediaQuery.sizeOf(context).width / 2,
+          ),
+          child: Image.memory(thumbnail, fit: BoxFit.cover));
+    } else {
+      // Return an error icon if thumbnail generation fails
+      return const Icon(Icons.error, color: Colors.red);
+    }
+  } catch (e) {
+    // Handle exceptions
+    print('Error generating video thumbnail: $e');
+    return const Icon(Icons.error, color: Colors.red);
   }
 }

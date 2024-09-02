@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,6 +19,7 @@ class MessageFirebaseController {
     required String receiverId, // Receiver ID as a parameter
     required MessageType messageType,
     required String content,
+    String? fileName,
   }) async {
     try {
       final messageId = Uuid().v4();
@@ -30,6 +33,7 @@ class MessageFirebaseController {
         chatId: chatId,
         messageType: messageType,
         content: content,
+        fileName: fileName,
         timestamp: DateTime.now(),
       );
 
@@ -62,6 +66,7 @@ class MessageFirebaseController {
     }
   }
 
+  // shere images
   Future<Uint8List?> pickImageToShere(ImageSource source) async {
     try {
       final ImagePicker imagePicker = ImagePicker();
@@ -96,4 +101,74 @@ class MessageFirebaseController {
       return null;
     }
   }
+
+  // shere videos
+  Future<XFile?> pickVideoToShare(ImageSource source) async {
+    try {
+      final ImagePicker imagePicker = ImagePicker();
+      XFile? file = await imagePicker.pickVideo(source: source);
+      return file;
+    } catch (e) {
+      print('Error picking video: $e');
+      return null;
+    }
+  }
+
+  Future<String?> uploadSharedVideoToStorage(XFile? videoFile) async {
+    if (videoFile == null) {
+      return null;
+    }
+    try {
+      Reference ref = _firebaseStorage
+          .ref()
+          .child('UserSharedVideos')
+          .child(_auth.currentUser!.uid)
+          .child(Uuid().v4());
+      UploadTask uploadTask = ref.putFile(File(videoFile.path));
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading video: $e');
+      return null;
+    }
+  }
+
+   // Method to pick documents
+  Future<PlatformFile?> pickDocumentToShare() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any, // You can specify the type of file you want
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        return result.files.first; // Return the selected file
+      }
+    } catch (e) {
+      print('Error picking document: $e');
+    }
+    return null;
+  }
+
+  Future<String?> uploadSharedDocumentToStorage(PlatformFile? documentFile) async {
+    if (documentFile == null) {
+      return null;
+    }
+    try {
+      File file = File(documentFile.path!); // Ensure the path is not null
+      Reference ref = _firebaseStorage
+          .ref()
+          .child('UserSharedDocuments')
+          .child(_auth.currentUser!.uid)
+          .child(Uuid().v4());
+      UploadTask uploadTask = ref.putFile(file);
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading document: $e');
+      return null;
+    }
+  }
+
 }

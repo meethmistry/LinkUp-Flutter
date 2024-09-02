@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:linkup/Authentications/Change%20Password%20Screens/get.user.email.dart';
 import 'package:linkup/Authentications/signup.screen.dart';
 import 'package:linkup/Controllers/user.controller.dart';
-import 'package:linkup/Main_Screens/chatlist.screen.dart';
+import 'package:linkup/Main_Screens/main.screen.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Theme/loading.indicator.dart';
 import 'package:linkup/Utilities/Snack_Bar/custom.snackbar.dart';
@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (res == "Success") {
           Navigator.push(context, MaterialPageRoute(
             builder: (context) {
-              return ChatListScreen();
+              return MainScreen();
             },
           ));
         } else {

@@ -93,8 +93,11 @@ class ChangeTheme extends StatelessWidget {
     return InkWell(
       onTap: () {
         if (_appTheme.isDark(context)) {
+          _appTheme.changeTheme(context, false);
           AdaptiveTheme.of(context).setLight();
         } else {
+          
+          _appTheme.changeTheme(context, true);
           AdaptiveTheme.of(context).setDark();
         }
       },
