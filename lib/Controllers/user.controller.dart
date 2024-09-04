@@ -451,4 +451,67 @@ class UserFirebaseController {
     }
     return res;
   }
+
+//////////////////////////////////////////////////////////
+  ///code for event////////////////////////////////////////
+/////////////////////////////////////////////////////////
+  ///
+
+  // Show users on Add event screen
+  Future<List<UserFirebase>> getChatUsersForEvent() async {
+    try {
+      final currentUserId = FirebaseAuth.instance.currentUser!.uid;
+
+      // Retrieve the current user's chat IDs
+      final currentUserSnapshot =
+          await _fireStore.collection('users').doc(currentUserId).get();
+      final currentUserChats =
+          List<String>.from(currentUserSnapshot['chats'] ?? []);
+
+      if (currentUserChats.isEmpty) {
+        return [];
+      }
+
+      // Fetch users who have chat IDs that match the current user's chats
+      final userSnapshot = await _fireStore
+          .collection('users')
+          .where('chats', arrayContainsAny: currentUserChats)
+          .get();
+
+      // Map the user documents to UserFirebase objects and exclude the current user
+      final users = userSnapshot.docs
+          .map((doc) =>
+              UserFirebase.fromJson(doc.data() as Map<String, dynamic>))
+          .where((user) => user.id != currentUserId)
+          .toList();
+
+      return users;
+    } catch (e) {
+      print('Error fetching users: $e');
+      return [];
+    }
+  }
+
+  // Fetch current user data and return a UserFirebase object
+  Future<UserFirebase?> fetchCurrentUser() async {
+    try {
+      // Get the currently signed-in user
+      User? user = _auth.currentUser;
+
+      if (user != null) {
+        // Fetch the user's data from Firestore using the user's UID
+        DocumentSnapshot<Map<String, dynamic>> userDoc =
+            await _fireStore.collection('users').doc(user.uid).get();
+
+        if (userDoc.exists) {
+          // Convert Firestore data to UserFirebase object and return it
+          return UserFirebase.fromJson(userDoc.data()!);
+        }
+      }
+      return null; // Return null if no user is signed in or document doesn't exist
+    } catch (e) {
+      print('Error fetching user data: $e');
+      return null; // Return null on error
+    }
+  }
 }
