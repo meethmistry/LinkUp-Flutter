@@ -72,7 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
     ));
   }
 
-  _loginWithGoogle() {}
+  _loginWithGoogle() async {
+    _firebaseController.loginWithGoogle();
+  }
 
   Widget buildSocialLoginButton({
     required VoidCallback onTap,

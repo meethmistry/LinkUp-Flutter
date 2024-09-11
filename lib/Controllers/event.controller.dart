@@ -119,7 +119,9 @@ class EventController {
           await updateEventIsEnd(event.id);
         } else {
           // Add event to the list if it hasn't ended
-          events.add(event);
+          if (event.isEnd != true) {
+            events.add(event);
+          }
         }
       }
 
@@ -134,7 +136,9 @@ class EventController {
         } else {
           // Add event to the list if it hasn't ended and is unique
           if (!events.any((e) => e.id == event.id)) {
-            events.add(event);
+            if (event.isEnd != true) {
+              events.add(event);
+            }
           }
         }
       }

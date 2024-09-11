@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:linkup/Controllers/event.controller.dart';
 import 'package:linkup/Controllers/event.message.controller.dart';
 import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Main_Screens/Event%20Screens/Shere%20Media/shere.event.image.dart';
@@ -18,6 +19,8 @@ import 'package:linkup/Models/message.model.dart';
 import 'package:linkup/Models/user.model.dart';
 import 'package:linkup/Providers/font.provider.dart';
 import 'package:linkup/Theme/app.theme.dart';
+import 'package:linkup/Theme/loading.indicator.dart';
+import 'package:linkup/Utilities/Dialog_Box/custom.dialogbox.dart';
 import 'package:linkup/Utilities/Snack_Bar/shere.options.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
@@ -37,6 +40,9 @@ class _UserChatScreenState extends State<EventChatScreen> {
       EventMessageController();
   final UserFirebaseController _userFirebaseController =
       UserFirebaseController();
+
+  final EventController _eventController = EventController();
+
   UserFirebase? user;
 
   @override
@@ -68,6 +74,16 @@ class _UserChatScreenState extends State<EventChatScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
+    }
+  }
+
+  Future<void> _endChat() async {
+    try {
+      print("Function called"); // Check if function is called
+      await _eventController
+          .updateEventIsEnd(eventId); // Ensure eventId is correct
+    } catch (e) {
+      print("Error in _endChat: $e");
     }
   }
 
@@ -247,28 +263,44 @@ class _UserChatScreenState extends State<EventChatScreen> {
             ],
           ),
         ),
-        title: InkWell(
-          onTap: () {
-            // Navigator.push(context, MaterialPageRoute(
-            //   builder: (context) {
-            //     return OtherUserProfileScreen(
-            //       user: widget.event.,
-            //     );
-            //   },
-            // ));
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.event.eventName,
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+        actions: [
+          if (widget.event.adminId == FirebaseAuth.instance.currentUser!.uid)
+            IconButton(
+              onPressed: () {
+                CustomDialogBox(
+                  message: "Do you want to close this event now?",
+                  buttonOne: "No",
+                  buttonActionOne: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  buttonTwo: "Confirm",
+                  buttonActionTwo: () async {
+                    await _endChat(); // Ensure this is awaited
+                    Navigator.of(context)
+                        .pop(); // Close the CustomDialogBox after action
+                    SuccessDialogBox(
+                      message: "Your event is closed.",
+                      buttonAction: () {
+                        Navigator.of(context)
+                            .pop(); // Close the SuccessDialogBox
+                      },
+                    ).show(context);
+                  },
+                ).show(context);
+              },
+              icon: Icon(Icons.close),
+            ),
+        ],
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.event.eventName,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -648,6 +680,7 @@ class _UserChatScreenState extends State<EventChatScreen> {
                   _messageText.text = "";
                   getMessagesForThisChat(eventId);
                 } else if (isShow) {
+                  LoadingIndicatorSent.show(status: "Sending");
                   final docUrl = await _eventMessageController
                       .uploadSharedDocumentToStorage(_document);
                   await _eventMessageController.sendEventMessage(
@@ -663,6 +696,7 @@ class _UserChatScreenState extends State<EventChatScreen> {
                     isShow = false;
                     _document = null;
                     _fileName = null;
+                    LoadingIndicatorSent.dismiss();
                   });
                 }
               },

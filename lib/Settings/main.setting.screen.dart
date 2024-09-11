@@ -8,10 +8,7 @@ import 'package:linkup/Authentications/login.screen.dart';
 import 'package:linkup/Controllers/user.controller.dart';
 import 'package:linkup/Main_Screens/user.profile.screen.dart';
 import 'package:linkup/Settings/Sub_Setting_Screens/account.setting.screen.dart';
-import 'package:linkup/Settings/Sub_Setting_Screens/call.history.screen.dart';
 import 'package:linkup/Settings/Sub_Setting_Screens/chat.setting.screen.dart';
-import 'package:linkup/Settings/Sub_Setting_Screens/notification.setting.screen.dart';
-import 'package:linkup/Settings/Sub_Setting_Screens/privacy.setting.screen.dart';
 import 'package:linkup/Settings/Widgets/main.settings.widget.dart';
 import 'package:linkup/Theme/app.theme.dart';
 import 'package:linkup/Theme/loading.indicator.dart';
@@ -244,14 +241,14 @@ class _MainSettingScreenState extends State<MainSettingScreen> {
               _navigation(const AccountSettings());
             },
           ),
-          CustomRowItem(
-            leadingIcon: Icons.security,
-            isMain: true,
-            text: "Privacy",
-            onTap: () {
-              _navigation(const PrivacySetting());
-            },
-          ),
+          // CustomRowItem(
+          //   leadingIcon: Icons.security,
+          //   isMain: true,
+          //   text: "Privacy",
+          //   onTap: () {
+          //     _navigation(const PrivacySetting());
+          //   },
+          // ),
           CustomRowItem(
             leadingIcon: Icons.message_outlined,
             isMain: true,
@@ -260,30 +257,30 @@ class _MainSettingScreenState extends State<MainSettingScreen> {
               _navigation(const ChatSettings());
             },
           ),
-          CustomRowItem(
-            leadingIcon: Icons.notifications,
-            isMain: true,
-            text: "Notifications",
-            onTap: () {
-              _navigation(NotificationSettings());
-            },
-          ),
-          CustomRowItem(
-            leadingIcon: Icons.history,
-            isMain: true,
-            text: "Call & Video Chat History",
-            onTap: () {
-              _navigation(CallOrVideoChatHistory());
-            },
-          ),
-          CustomRowItem(
-            leadingIcon: Icons.share,
-            isMain: true,
-            text: "Share Link Up",
-            onTap: () {
-              _shareApk(context);
-            },
-          ),
+          // CustomRowItem(
+          //   leadingIcon: Icons.notifications,
+          //   isMain: true,
+          //   text: "Notifications",
+          //   onTap: () {
+          //     _navigation(NotificationSettings());
+          //   },
+          // ),
+          // CustomRowItem(
+          //   leadingIcon: Icons.history,
+          //   isMain: true,
+          //   text: "Call & Video Chat History",
+          //   onTap: () {
+          //     _navigation(CallOrVideoChatHistory());
+          //   },
+          // ),
+          // CustomRowItem(
+          //   leadingIcon: Icons.share,
+          //   isMain: true,
+          //   text: "Share Link Up",
+          //   onTap: () {
+          //     _shareApk(context);
+          //   },
+          // ),
           CustomRowItem(
             leadingIcon: Icons.logout,
             isMain: true,

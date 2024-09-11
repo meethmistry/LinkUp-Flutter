@@ -126,17 +126,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ],
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'createGroup',
-                    child: Row(
-                      children: [
-                        Icon(CupertinoIcons.person_2,
-                            color: _themeColors.iconColor(context)),
-                        const SizedBox(width: 8),
-                        const Text('New Group'),
-                      ],
-                    ),
-                  ),
+                  // PopupMenuItem(
+                  //   value: 'createGroup',
+                  //   child: Row(
+                  //     children: [
+                  //       Icon(CupertinoIcons.person_2,
+                  //           color: _themeColors.iconColor(context)),
+                  //       const SizedBox(width: 8),
+                  //       const Text('New Group'),
+                  //     ],
+                  //   ),
+                  // ),
                   PopupMenuItem(
                     value: 'search',
                     child: Row(

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:linkup/Models/chat.model.dart';
 import 'package:linkup/Models/user.model.dart';
@@ -188,6 +189,16 @@ class UserFirebaseController {
     return res;
   }
 
+
+  // login with google
+  loginWithGoogle() async {
+    final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
+    final GoogleSignInAuthentication gAuth = await gUser!.authentication;
+    final credential = GoogleAuthProvider.credential(
+        accessToken: gAuth.accessToken, idToken: gAuth.idToken);
+    return await FirebaseAuth.instance.signInWithCredential(credential);
+  }
+
 // Logout user
   Future<void> logoutUser() async {
     try {
@@ -204,6 +215,30 @@ class UserFirebaseController {
       }
     } catch (e) {
       print("Error logging out: $e");
+    }
+  }
+
+  ///Delete account
+  Future<bool> deleteAccount() async {
+    try {
+      User? user = _auth.currentUser; // Get the current user
+      if (user != null) {
+        String firebaseUid = user.uid; // Get the user's UID
+
+        // Delete user data from Firestore
+        await _fireStore.collection("users").doc(firebaseUid).delete();
+
+        // Delete user account from Firebase Authentication
+        await user.delete();
+
+        return true; // Return true if the account was deleted successfully
+      } else {
+        print('No user is currently signed in.');
+        return false;
+      }
+    } catch (e) {
+      print('Error deleting account: ${e.toString()}');
+      return false;
     }
   }
 

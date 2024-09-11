@@ -42,6 +42,7 @@ class CustomTextFormField extends StatelessWidget {
       controller: controller,
       cursorColor: _themeColors.blueColor,
       maxLines: maxLines ?? 1,
+      obscureText: labelText == 'Password' || labelText == 'Conform Password' ? true : false,
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: Icon(
